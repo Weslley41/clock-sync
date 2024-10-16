@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clock Sync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      let lastSendTimes = {
+        client1: null,
+        client2: null,
+        client3: null,
+      };
+
+      let sendOrder = [];
+
+      function timeToMinutes(timeStr) {
+        const [hours, minutes] = timeStr.split(":").map(Number);
+        return hours * 60 + minutes;
+      }
+
+      function minutesToTime(minutes) {
+        const hours = Math.floor(minutes / 60)
+          .toString()
+          .padStart(2, "0");
+        const mins = (minutes % 60).toString().padStart(2, "0");
+        return `${hours}:${mins}`;
+      }
+
+      function calculateTimeDifference(start, end) {
+        const diff = end - start;
+        const hours = Math.floor(diff / 60)
+          .toString()
+          .padStart(2, "0");
+        const mins = (diff % 60).toString().padStart(2, "0");
+        return `+${hours}:${mins}`;
+      }
+
+      function submitAll() {
+        handleSubmit(1);
+        handleSubmit(2);
+        handleSubmit(3);
+      }
+
+      function handleSubmit(clientNumber) {
+        const serverTimeInput = document.querySelector("#serverTime").value;
+        const machineTimeInput = document.querySelector(
+          `#client${clientNumber}MachineTime`
+        ).value;
+        const sendTimeInput = document.querySelector(
+          `#client${clientNumber}SendTime`
+        ).value;
+
+        if (!serverTimeInput || !machineTimeInput || !sendTimeInput) {
+          alert(
+            `Cliente ${clientNumber}: Por favor, preencha todos os campos de horário.`
+          );
+          return;
+        }
+
+        const serverTimeInMinutes = timeToMinutes(serverTimeInput);
+        const machineTimeInMinutes = timeToMinutes(machineTimeInput);
+        const sendTimeInMinutes = timeToMinutes(sendTimeInput);
+
+        const timeDifference = sendTimeInMinutes - machineTimeInMinutes;
+
+        if (timeDifference < 0) {
+          alert(
+            `Cliente ${clientNumber}: Horário inválido! Certifique-se que o horário de envio é maior ou igual o horário da máquina.`
+          );
+          return;
+        }
+
+        const serverReceiveTime = serverTimeInMinutes + timeDifference;
+
+        const receiveTimeStr = minutesToTime(serverReceiveTime);
+        const timeDiffStr = calculateTimeDifference(
+          machineTimeInMinutes,
+          sendTimeInMinutes
+        );
+
+        lastSendTimes[`client${clientNumber}`] = sendTimeInMinutes;
+        updateSendOrder(clientNumber);
+
+        const logTerminal = document.querySelector("#logTerminal");
+        const logMessage =
+          `[${receiveTimeStr}] Cliente ${clientNumber} enviou uma mensagem.\n` +
+          `> Horário da máquina cliente: ${machineTimeInput}\n` +
+          `> Horário de envio: ${sendTimeInput} (${timeDiffStr})\n`;
+        logTerminal.innerHTML += `<pre>${logMessage}</pre>`;
+        logTerminal.scrollTop = logTerminal.scrollHeight;
+
+        updateClientOrder();
+      }
+
+      function updateSendOrder(clientNumber) {
+        sendOrder = sendOrder.filter((c) => c !== clientNumber);
+        sendOrder.unshift(clientNumber);
+      }
+
+      function updateClientOrder() {
+        sendOrder.forEach((clientNumber, index) => {
+          const clientTitle = document.querySelector(
+            `#client${clientNumber}Title`
+          );
+          clientTitle.textContent = `Cliente ${clientNumber} (ordem ${
+            index + 1
+          }º)`;
+        });
+      }
+    </script>
+  </head>
+
+  <body class="bg-gray-100 flex min-h-screen">
+    <div class="flex flex-col md:flex-row w-full flex-grow">
+      <div class="w-full md:w-2/3 p-4">
+        <h1 class="text-2xl font-bold mb-6">Clock Sync</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="mb-8 text-center md:col-start-2">
+            <h2 class="text-xl font-semibold">Horário do servidor</h2>
+            <input
+              type="time"
+              id="serverTime"
+              class="mt-2 p-2 border border-gray-300 rounded-lg w-full mb-2"
+            />
+            <button
+              onclick="submitAll()"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
+            >
+              Enviar todos
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-4 bg-white rounded-lg shadow-lg">
+            <div class="inline-flex justify-between">
+              <h3 id="client1Title" class="text-lg font-semibold mb-2">
+                Cliente 1
+              </h3>
+            </div>
+            <label class="block mb-2">Horário da máquina:</label>
+            <input
+              type="time"
+              id="client1MachineTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <label class="block mb-2">Horário de envio:</label>
+            <input
+              type="time"
+              id="client1SendTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <button
+              onclick="handleSubmit(1)"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
+            >
+              Enviar
+            </button>
+          </div>
+
+          <div class="p-4 bg-white rounded-lg shadow-lg">
+            <h3 id="client2Title" class="text-lg font-semibold mb-2">
+              Cliente 2
+            </h3>
+            <label class="block mb-2">Horário da máquina:</label>
+            <input
+              type="time"
+              id="client2MachineTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <label class="block mb-2">Horário de envio:</label>
+            <input
+              type="time"
+              id="client2SendTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <button
+              onclick="handleSubmit(2)"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
+            >
+              Enviar
+            </button>
+          </div>
+
+          <div class="p-4 bg-white rounded-lg shadow-lg">
+            <h3 id="client3Title" class="text-lg font-semibold mb-2">
+              Cliente 3
+            </h3>
+            <label class="block mb-2">Horário da máquina:</label>
+            <input
+              type="time"
+              id="client3MachineTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <label class="block mb-2">Horário de envio:</label>
+            <input
+              type="time"
+              id="client3SendTime"
+              class="p-2 border border-gray-300 rounded-lg w-full mb-4"
+            />
+            <button
+              onclick="handleSubmit(3)"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="reports"
+        class="md:w-1/3 p-4 bg-gray-900 text-white rounded-lg m-4 md:m-2 min-h-96 max-md:!max-h-96 flex flex-col gap-4"
+      >
+        <h2 class="text-xl font-semibold">Relatórios</h2>
+        <div
+          id="logTerminal"
+          class="bg-gray-800 p-4 rounded-lg text-sm h-full overflow-y-auto flex flex-col gap-2 md:gap-4"
+        ></div>
+      </div>
+    </div>
+  </body>
+
+  <style>
+    #reports {
+      max-height: calc(100dvh - 16px);
+    }
+  </style>
+</html>
