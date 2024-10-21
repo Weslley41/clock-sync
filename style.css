@@ -1,0 +1,3 @@
+#reports {
+  max-height: calc(100dvh - 16px);
+}
