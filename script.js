@@ -98,13 +98,13 @@ function clearTerminal() {
 
 function updateSendOrder() {
   const indexedClients = Object.entries(lastSendTimesDiff)
-    .filter((entry) => entry[1] !== null)
     .map((entry, index) => ({
       value: entry[1],
       index: index + 1,
     }));
 
   sendOrder = indexedClients
+    .filter((client) => client.value !== null)
     .sort((a, b) => a.value - b.value)
     .map((client) => client.index);
 
