@@ -103,7 +103,7 @@ function updateOrder() {
   });
 }
 
-function clearHistory() {
+function clearTerminal() {
   logTerminal.innerText = "";
   client1.clear();
   client2.clear();
