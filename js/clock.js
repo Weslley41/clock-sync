@@ -20,9 +20,9 @@ function formatDate(minutes) {
 }
 
 function formatTime(minutes) {
-  const hours = Math.round(minutes / 60)
-    .toString()
-    .padStart(2, "0");
+  let hours = (minutes > 0 ? Math.floor(minutes / 60) : Math.ceil(minutes / 60))
+  hours = hours.toString().padStart(2, "0");
+
   const mins = (minutes % 60).toString().padStart(2, "0");
   return `${hours}:${mins}`;
 }
@@ -56,7 +56,6 @@ class Server {
   }
 
   changeTime(newTime) {
-    console.log('new time:', newTime)
     this.time = newTime;
     this.timeInMinutes = timeToMinutes(newTime);
   }
@@ -72,7 +71,11 @@ class Server {
   getMessagesOrder() {
     const messages = this.clients
       .flatMap((client) => client.history)
-      .sort((a, b) => a.timeInMinutes - b.timeInMinutes);
+      .sort((a, b) => {
+        const timeA = a.timeInMinutes + a.sender.differenceToLogicClock;
+        const timeB = b.timeInMinutes + b.sender.differenceToLogicClock;
+        return timeA - timeB;
+      });
 
     return messages.map((message) => message.basedOnLogicClockString());
   }
@@ -94,9 +97,7 @@ class Server {
     clients.forEach((client) => {
       logicClockInMinutes += client.timeInMinutes;
     });
-    console.log(clients)
-    console.log(clients.length + 1)
-    console.log(logicClockInMinutes)
+
     logicClockInMinutes = logicClockInMinutes / (clients.length + 1);
 
     this.updateDiffToLogicClock();
@@ -128,10 +129,7 @@ class Client {
   }
 
   updateDiffToLogicClock() {
-    console.log('logicClockInMinutes:', logicClockInMinutes)
-    console.log('this.timeInMinutes:', this.timeInMinutes)
     this.differenceToLogicClock = logicClockInMinutes - this.timeInMinutes;
-    console.log('this.differenceToLogicClock:', this.differenceToLogicClock)
   }
 
   changeTime(newTime) {
